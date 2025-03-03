@@ -1,6 +1,8 @@
 import contextlib
 import json
 import pickle
+import urllib
+import requests
 from datetime import datetime
 from functools import wraps
 from os import environ, utime
@@ -9,11 +11,6 @@ from pathlib import Path
 from time import sleep, time
 from typing import Any, Callable, Optional
 from urllib.parse import parse_qs, urlparse
-
-import urllib
-
-import requests
-
 from wyzecam.kinesis.wpk_stream_info_model import Stream
 import wyzecam
 from requests import get
