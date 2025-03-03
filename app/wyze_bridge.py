@@ -97,7 +97,7 @@ class WyzeBridge(Thread):
             record = bool(env_cam("sub_record", cam.name_uri))
             sub_opt = replace(options, substream=True, quality=quality, record=record)
             sub = WyzeStream(cam, sub_opt)
-            self.mtx.add_path(sub.uri, not options.reconnect)
+            self.mtx.add_path(sub.uri, not options.reconnect, cam.is_kvs)
             self.streams.add(sub)
 
     def clean_up(self, *_):

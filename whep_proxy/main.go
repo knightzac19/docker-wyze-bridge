@@ -248,12 +248,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		// _, err = peerConnection.AddTrack(videoTrack)
-		// if err != nil {
-		// 	fmt.Println("Error adding video track:", err)
-		// 	return
-		// }
-
 		// Create offer
 		offer, err := peerConnection.CreateOffer(nil)
 		if err != nil {
@@ -267,7 +261,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("[WHEP_PROXY] Error setting local description:", err)
 			return
 		}
-		fmt.Println("[WHEP_PROXY] Local Description:", offer.SDP)
 
 		peerConnection.OnICECandidate(func(c *webrtc.ICECandidate) {
 			if c != nil {
@@ -454,7 +447,6 @@ func whepHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		offer := string(body)
 		fmt.Printf("[WHEP_PROXY] Received POST offer for stream %s\n", streamID)
-		fmt.Printf("[WHEP_PROXY] Offer:\n%s\n", offer)
 
 		peerConnectionConfiguration := webrtc.Configuration{}
 		peerConnection, err := webrtc.NewPeerConnection(peerConnectionConfiguration)
@@ -521,7 +513,6 @@ func whepHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated) // 201
 
 		// Filter out application media section before sending
-		fmt.Printf("[WHEP_PROXY] Filtered SDP:\n%s\n", peerConnection.LocalDescription().SDP)
 		fmt.Printf("[WHEP_PROXY] Sending POST response (answer) for stream %s with ETag %s\n", streamID, stream.etag)
 		fmt.Fprint(w, peerConnection.LocalDescription().SDP)
 
