@@ -40,7 +40,7 @@ NO_WEBRTC = {
 }
 
 
-KVS_CAMS = {"AN_RSCW", "AN_RDB1"}
+KVS_CAMS = {"AN_RSCW", "AN_RDB1", "HL_CAM4", "WYZE_CAKP2JFUS"}
 
 # known 2k cameras
 PRO_CAMS = {"HL_CAM3P", "HL_PANP", "HL_CAM4", "HL_DB2", "HL_CFL2"}

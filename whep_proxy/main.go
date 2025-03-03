@@ -23,6 +23,7 @@ type WebRTCStream struct {
 	wsConn            *websocket.Conn
 	remoteDescription *webrtc.SessionDescription
 	etag              string // Add ETag field
+	videoTrack        *webrtc.TrackLocalStaticRTP
 }
 
 type ICEServer struct {
@@ -39,13 +40,7 @@ type WebRTCConfig struct {
 var streams = make(map[string]*WebRTCStream)
 var streamsMu sync.Mutex
 
-var videoTrack *webrtc.TrackLocalStaticRTP
-
 func main() {
-	var err error
-	if videoTrack, err = webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video", "pion"); err != nil {
-		panic(err)
-	}
 
 	r := mux.NewRouter()
 
@@ -150,6 +145,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	stream, ok := streams[streamID]
 	if !ok {
+
 		// Convert ICE servers configuration
 		iceServers := []webrtc.ICEServer{}
 		for _, server := range config.ICEServers {
@@ -242,6 +238,9 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 			peerConnection: peerConnection,
 			wsConn:         conn, // Store the WebSocket connection
 		}
+		if stream.videoTrack, err = webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video", "pion"); err != nil {
+			panic(err)
+		}
 		streams[streamID] = stream
 
 		if _, err = peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
@@ -303,7 +302,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 					panic(err)
 				}
 
-				if err = videoTrack.WriteRTP(pkt); err != nil {
+				if err = stream.videoTrack.WriteRTP(pkt); err != nil {
 					panic(err)
 				}
 			}
@@ -313,7 +312,13 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			for {
 				var msg map[string]interface{}
-
+				if _, _, err := conn.ReadMessage(); err != nil {
+					fmt.Printf("[WHEP_PROXY] WebSocket closed: %v\n", err)
+					streamsMu.Lock()
+					stream.wsConn.Close()
+					streamsMu.Unlock()
+					return
+				}
 				err := conn.ReadJSON(&msg)
 				if len(msg) == 0 && err == nil {
 					continue
@@ -348,7 +353,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 						fmt.Println("[WHEP_PROXY] Error unmarshaling answer:", err)
 						continue
 					}
-					fmt.Println("[WHEP_PROXY] Remote Description:", answer)
 					if err := stream.peerConnection.SetRemoteDescription(answer); err != nil {
 						fmt.Println("[WHEP_PROXY] Error setting remote description:", err)
 						continue
@@ -455,7 +459,7 @@ func whepHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		rtpSender, err := peerConnection.AddTrack(videoTrack)
+		rtpSender, err := peerConnection.AddTrack(stream.videoTrack)
 		if err != nil {
 			panic(err)
 		}
