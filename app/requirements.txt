@@ -6,5 +6,3 @@ python-dotenv==1.0.*
 requests==2.32.*
 PyYAML==6.0.*
 xxtea==3.3.*
-aiortc==1.*
-aiohttp

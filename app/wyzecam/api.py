@@ -20,6 +20,7 @@ WYZE_API = "https://api.wyzecam.com/app"
 CLOUD_API = "https://app-core.cloud.wyze.com/app"
 NEW_WYZE_API = "https://app.wyzecam.com/app"
 KVS_API = "https://kvs-service.wyzecam.com/app"
+DEICEMANAGEMENT_API = "https://devicemgmt-service.wyze.com"
 SC_SV = {
     "default": {
         "sc": "9f275790cab94a72bd206c8876429f3c",
@@ -256,6 +257,29 @@ def post_device(
     return validate_resp(resp)
 
 
+def wakeup_kvs_camera(auth_info: WyzeCredential, camera: WyzeCamera):
+    url = f"{DEICEMANAGEMENT_API}/device-management/api/action/run_action"
+    payload = {
+        "targetInfo": {
+            "id": camera.mac,
+            "type": "DEVICE",
+            "productModel": camera.product_model,
+        },
+        "capabilities": [
+            {
+                "name": "iot-device",
+                "functions": [{"name": "wakeup", "in": {"wakeup-live-view": True}}],
+            }
+        ],
+        "nonce": int(time.time() * 1000),
+        "transactionId": uuid.uuid4().hex,
+    }
+
+    payload = sort_dict(payload)
+    headers = sign_payload(auth_info, "9319141212m2ik", payload)
+    resp = post(url, data=payload, headers=headers)
+    validate_resp(resp)
+
 def get_camera_stream(auth_info: WyzeCredential, camera: WyzeCamera) -> Stream:
     """Get the camera stream."""
     url = f"{NEW_WYZE_API}/v4/camera/get_streams"
@@ -376,6 +400,7 @@ def sign_payload(auth_info: WyzeCredential, app_id: str, payload: str) -> dict:
         "appinfo": f"wyze_ios_{APP_VERSION}",
         "appversion": APP_VERSION,
         "access_token": auth_info.access_token,
+        "authorization": auth_info.access_token,
         "appid": app_id,
         "env": "prod",
         "signature2": sign_msg(app_id, payload, auth_info.access_token),
