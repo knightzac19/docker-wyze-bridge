@@ -1,7 +1,7 @@
 name: Docker Wyze Bridge (DEV branch)
 description: DEV build. Use the REBUILD button to pull latest image.
 slug: docker_wyze_bridge_dev
-url: "https://github.com/mrlt8/docker-wyze-bridge"
+url: "https://github.com/knightzac19/docker-wyze-bridge"
 version: dev
 stage: experimental
 arch:
